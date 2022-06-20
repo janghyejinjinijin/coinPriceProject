@@ -14,9 +14,9 @@ class CoinViewThread(QThread):
     # 시그널 함수 정의
     coinDataSent = pyqtSignal(float, float, float, float, float, float, float, float)
 
-    def __init__(self):
+    def __init__(self, ticker): #초기화자에 인수하나 넣어주기
         super().__init__()
-        self.ticker = "BTC"
+        self.ticker = ticker
         self.alive = True
 
     def run(self):
@@ -57,22 +57,37 @@ class MainWindow(QMainWindow, form_class):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("BitCoin Price Overview")
-        self.setWindowIcon(QIcon("icons/bitcoin.png"))
-        self.statusBar().showMessage('ver 0.5')
+        self.setWindowIcon(QIcon("icon/bitcoin.png"))
+        self.statusBar().showMessage('ver 1.0 by HyeJin')
         self.ticker = "BTC"
 
         self.cvt = CoinViewThread()  # 코인정보를 가져오는 쓰레드 클래스를 멤버객체로 선언
         self.cvt.coinDataSent.connect(self.fillCoinData)  # 쓰레드 시그널에서 온 데이터를 받아줄 슬롯함수를 연결
         self.cvt.start()  # 쓰레드 클래스의 run()를 호출(함수시작)
 
+    def comboBox_setting(self): # 코인리스트 콤보박스 셋팅
+        ticker_list = pyupbit.get_tickers(fiat="KRW")
+        # 업비트에 원화로 살 수 있는애들만 뽑을 수 있음
+       # self.coin_comboBox.addItems(ticker_list) # 코인(ticker)리스트를 콤보박스에 추가
+
+        coin_list = []
+        for ticker in ticker_list:
+            #print(ticker[4:10])
+            coin_list.append(ticker[4:10])
+            self.coin_comboBox.addItems(coin_list) #코인리스트를 콤보박스에 추가
+
+
+        coin_list.remove('BTC')
+        coin_list1 = ['BTC']
+        coin_list2 = sorted(coin_list)
     # 쓰레드클래스에서 보내준 데이터를 받아주는 슬롯 함수
     def fillCoinData(self, trade_price, acc_trade_volume_24h, acc_trade_price_24h,
                      high_price, low_price, prev_closing_price, trade_volume, signed_change_rate):
         self.coin_price_label.setText(f"{trade_price:,.0f}원")  # 코인현재가격
         self.coin_changelate_label.setText(f"{signed_change_rate:+.2f}%")  # 가격변화율
-        self.acc_trade_volume_label.setText(f"{acc_trade_volume_24h:4f} {self.ticker}")  # 24시간 거래량
+        self.acc_trade_volum_label.setText(f"{acc_trade_volume_24h:4f} {self.ticker}")  # 24시간 거래량
         self.acc_trade_price_label.setText(f"{acc_trade_price_24h:,.0f}원")  # 24시간 거래금액
-        self.trade_volume_label.setText(f"{trade_volume:.6f} {self.ticker}")  # 최근 거래량
+        self.trdae_volume_label.setText(f"{trade_volume:.6f} {self.ticker}")  # 최근 거래량
         self.high_price_label.setText(f"{high_price:,.0f}원")  # 당일 고가
         self.low_price_label.setText(f"{low_price:,.0f}원")  # 당일 저가
         self.prev_closing_price_label.setText(f"{prev_closing_price:,.0f}원")  # 전일 종가
